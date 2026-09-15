@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>SysDesign &mdash; System Design notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b2430; --ink-soft:#4a5668; --muted:#7c8899;
+  --paper:#fbfaf6; --line:#d9e2ec; --grid:#e8edf3;
+  --accent:#0f6fff; --accent-soft:#e8f1ff;
+  --lld:#7c3aed; --lld-soft:#f1ebff;
+  --hld:#0d9488; --hld-soft:#e2f5f2;
+  --warn:#b45309; --warn-soft:#fef3c7;
+  --ok:#15803d; --ok-soft:#dcfce7;
+  --bad:#b91c1c; --bad-soft:#fee2e2;
+  --card:#ffffff; --shadow:0 1px 2px rgba(20,30,50,.05),0 8px 24px rgba(20,30,50,.06);
+  --mono:ui-monospace,"JetBrains Mono","SFMono-Regular",Menlo,Consolas,monospace;
+  --sans:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+body{
+  margin:0; font-family:var(--sans); color:var(--ink); background:var(--paper);
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),
+                   linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:22px 22px; line-height:1.65; -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:900px;margin:0 auto;padding:0 20px 90px}
+a{color:var(--accent);text-decoration:none}
+a:hover{text-decoration:underline}
+
+/* header */
+header.top{border-bottom:1px solid var(--line);background:rgba(251,250,246,.9);
+  backdrop-filter:blur(8px);position:sticky;top:0;z-index:20}
+header.top .bar{max-width:900px;margin:0 auto;padding:12px 20px;display:flex;
+  align-items:center;gap:14px;flex-wrap:wrap}
+.brand{font-weight:800;letter-spacing:-.02em;font-size:17px;color:var(--ink)}
+.brand span{color:var(--accent)}
+.bar nav{margin-left:auto;display:flex;gap:16px;font-size:14px;flex-wrap:wrap}
+.bar nav a{color:var(--ink-soft);font-weight:500}
+
+/* hero */
+.hero{padding:54px 0 26px}
+.hero h1{font-size:40px;line-height:1.12;letter-spacing:-.03em;margin:0 0 12px}
+.hero p{font-size:17px;color:var(--ink-soft);margin:0;max-width:62ch}
+.kicker{display:inline-block;font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--accent);background:var(--accent-soft);
+  padding:5px 10px;border-radius:5px;margin-bottom:16px}
+
+/* generic card */
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:22px 24px;box-shadow:var(--shadow);margin:18px 0}
+.card > :first-child{margin-top:0}
+.card > :last-child{margin-bottom:0}
+
+h2{font-size:25px;letter-spacing:-.02em;margin:38px 0 6px}
+h3{font-size:18px;letter-spacing:-.01em;margin:26px 0 6px}
+h2 .n,h3 .n{font-family:var(--mono);font-size:.62em;color:var(--muted);margin-right:10px}
+
+/* tracks / badges */
+.badge{display:inline-block;font-family:var(--mono);font-size:11px;font-weight:600;
+  letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:5px}
+.b-lld{background:var(--lld-soft);color:var(--lld)}
+.b-hld{background:var(--hld-soft);color:var(--hld)}
+.b-core{background:var(--accent-soft);color:var(--accent)}
+.b-soon{background:#eef1f5;color:var(--muted)}
+
+/* note grid */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;margin:18px 0}
+.note-card{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;
+  padding:18px;box-shadow:var(--shadow);transition:transform .14s,box-shadow .14s;color:inherit}
+.note-card:hover{transform:translateY(-2px);box-shadow:0 10px 30px rgba(20,30,50,.10);text-decoration:none}
+.note-card .num{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.note-card h4{margin:8px 0 6px;font-size:16.5px;letter-spacing:-.01em}
+.note-card p{margin:0;font-size:13.5px;color:var(--ink-soft)}
+.note-card.dim{opacity:.62;pointer-events:none;background:#f6f7f9}
+
+/* fast track */
+.fast{border:1px solid var(--accent);background:linear-gradient(180deg,#f5f9ff,#fff);
+  border-radius:14px;padding:22px 24px;margin:26px 0}
+.fast h3{margin-top:0;display:flex;align-items:center;gap:10px}
+
+/* callouts */
+.callout{border-left:4px solid var(--accent);background:var(--accent-soft);
+  border-radius:0 10px 10px 0;padding:14px 18px;margin:18px 0}
+.callout.hook{border-color:var(--warn);background:var(--warn-soft)}
+.callout.answer{border-color:var(--ok);background:var(--ok-soft)}
+.callout.trap{border-color:var(--bad);background:var(--bad-soft)}
+.callout .lbl{font-family:var(--mono);font-size:11px;letter-spacing:.12em;
+  text-transform:uppercase;font-weight:700;display:block;margin-bottom:6px;opacity:.85}
+.callout p:last-child{margin-bottom:0}
+
+/* code */
+pre{background:#131a24;color:#e6edf3;border-radius:10px;padding:16px 18px;overflow-x:auto;
+  font-family:var(--mono);font-size:13.2px;line-height:1.62;margin:16px 0}
+pre .k{color:#ff7b9c} pre .t{color:#79c0ff} pre .s{color:#a5d6ff}
+pre .c{color:#8b98a5;font-style:italic} pre .f{color:#d2a8ff} pre .n{color:#ffa657}
+code{font-family:var(--mono);font-size:.9em;background:#eef1f5;padding:2px 6px;border-radius:4px}
+pre code{background:none;padding:0;font-size:inherit}
+
+/* tables */
+table{width:100%;border-collapse:collapse;margin:18px 0;font-size:14.2px}
+th,td{border:1px solid var(--line);padding:9px 12px;text-align:left;vertical-align:top}
+th{background:#f2f5f9;font-weight:600;font-size:13px;letter-spacing:.01em}
+tbody tr:nth-child(even){background:#fafbfd}
+
+/* diagrams */
+.fig{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px;
+  margin:20px 0;box-shadow:var(--shadow);overflow-x:auto}
+.fig svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.fig .cap{font-size:12.5px;color:var(--muted);text-align:center;margin-top:10px;font-family:var(--mono)}
+
+ul,ol{padding-left:22px}
+li{margin:5px 0}
+hr{border:none;border-top:1px dashed var(--line);margin:34px 0}
+
+/* source strip */
+.source{font-size:13px;color:var(--ink-soft);background:#f2f5f9;border:1px dashed var(--line);
+  border-radius:9px;padding:10px 14px;margin:14px 0;font-family:var(--mono)}
+
+/* quiz */
+.quiz{background:var(--card);border:1px solid var(--line);border-radius:14px;
+  padding:24px;margin:34px 0;box-shadow:var(--shadow)}
+.quiz h3{margin-top:0}
+.score{font-family:var(--mono);font-size:13px;color:var(--ink-soft);
+  background:#f2f5f9;padding:6px 12px;border-radius:7px;display:inline-block;margin-bottom:6px}
+.q{border-top:1px solid var(--line);padding:18px 0}
+.q:first-of-type{border-top:none}
+.q .qt{font-weight:600;margin-bottom:10px}
+.q .qt .qn{font-family:var(--mono);color:var(--muted);margin-right:8px;font-weight:400}
+.opt{display:block;width:100%;text-align:left;border:1px solid var(--line);background:#fff;
+  border-radius:9px;padding:10px 14px;margin:7px 0;cursor:pointer;font:inherit;font-size:14.2px;
+  transition:background .12s,border-color .12s}
+.opt:hover:not(:disabled){border-color:var(--accent);background:var(--accent-soft)}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--ok-soft);border-color:var(--ok);font-weight:600}
+.opt.wrong{background:var(--bad-soft);border-color:var(--bad)}
+.exp{display:none;margin-top:10px;font-size:14px;background:#f2f5f9;border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;padding:11px 14px;color:var(--ink-soft)}
+.exp.show{display:block}
+
+/* 30 second revision */
+.revise{background:#131a24;color:#e6edf3;border-radius:14px;padding:24px;margin:30px 0}
+.revise h3{margin:0 0 4px;color:#fff}
+.revise .sub{font-family:var(--mono);font-size:12px;color:#8b98a5;margin-bottom:12px}
+.revise ul{margin:0;padding-left:20px}
+.revise li{margin:7px 0;font-size:14.5px}
+.revise code{background:#233040;color:#ffd7a8}
+
+/* prev/next */
+.pager{display:flex;gap:12px;justify-content:space-between;margin:36px 0 0;flex-wrap:wrap}
+.pager a{border:1px solid var(--line);background:var(--card);border-radius:10px;
+  padding:11px 16px;font-size:14px;box-shadow:var(--shadow)}
+
+footer{border-top:1px solid var(--line);margin-top:60px;padding:24px 0;
+  font-size:13px;color:var(--muted);text-align:center}
+
+@media (max-width:560px){
+  .hero h1{font-size:30px}
+  .wrap{padding:0 15px 70px}
+  .card,.quiz,.fast{padding:18px}
+}
+</style>
+</head>
+<body>
+<header class="top"><div class="bar">
+  <div class="brand">Sys<span>Design</span></div>
+  <nav><a href="index.html">Home</a><a href="index.html#lld">LLD</a><a href="index.html#hld">HLD</a></nav>
+</div></header>
+<div class="wrap">
+
+<div class="hero">
+  <span class="kicker">Interview prep &middot; Engineering notebook</span>
+  <h1>System Design, written down properly.</h1>
+  <p>Low-Level &amp; High-Level System Design &mdash; an engineering notebook. Notes are built topic by topic as I work through the material &mdash;
+  diagrams first, dense text last, and every note ends with a quiz and a 30-second revision block.</p>
+</div>
+<div class="fast"><h3>&#9889; Fast Track</h3><p>Highest-yield notes &mdash; read these first if an interview is close.</p><div class="grid"><a class="note-card" href="lecture-01-what-is-lld.html"><div class="num">Note 01 &nbsp;<span class="badge b-lld">LLD</span></div><h4>What is LLD?</h4><p>The three pillars, and the noun-to-class walkthrough on a food delivery system.</p></a></div></div>
+
+<h2 id="lld">Low-Level Design</h2><p style="color:var(--ink-soft);margin-top:0">Following the Coder Army <em>System Design Full Course</em> (40 lectures) &mdash; fundamentals, design patterns, then machine-coding projects.</p><div class="grid"><a class="note-card" href="lecture-01-what-is-lld.html"><div class="num">Note 01 &nbsp;<span class="badge b-lld">LLD</span></div><h4>What is LLD?</h4><p>The three pillars, and the noun-to-class walkthrough on a food delivery system.</p></a><div class="note-card dim"><div class="num">Note 02 &nbsp;<span class="badge b-soon">soon</span></div><h4>OOPs & Fundamentals (cont.)</h4><p>Lectures 2-6 - OOP recap, UML, and the rest of the LLD workflow.</p></div><div class="note-card dim"><div class="num">Note 03 &nbsp;<span class="badge b-soon">soon</span></div><h4>Design Patterns in LLD</h4><p>Lectures 7-28 - creational, structural and behavioural patterns with UML + code.</p></div><div class="note-card dim"><div class="num">Note 04 &nbsp;<span class="badge b-soon">soon</span></div><h4>Real-World LLD Projects</h4><p>Lectures 29-40 - machine-coding builds: the full case studies.</p></div></div>
+<h2 id="hld">High-Level Design</h2><p style="color:var(--ink-soft);margin-top:0">Scaling, storage, caching, queues, and end-to-end case studies.</p><div class="grid"><div class="note-card dim"><div class="num">Note 20 &nbsp;<span class="badge b-soon">soon</span></div><h4>HLD foundations</h4><p>Latency numbers, back-of-envelope math, availability and SLAs.</p></div><div class="note-card dim"><div class="num">Note 21 &nbsp;<span class="badge b-soon">soon</span></div><h4>Scaling & load balancing</h4><p>Vertical vs horizontal, LB algorithms, stateless services.</p></div><div class="note-card dim"><div class="num">Note 22 &nbsp;<span class="badge b-soon">soon</span></div><h4>Caching</h4><p>Where to cache, eviction, invalidation, thundering herd.</p></div><div class="note-card dim"><div class="num">Note 23 &nbsp;<span class="badge b-soon">soon</span></div><h4>Databases & sharding</h4><p>SQL vs NoSQL, indexing, replication, partitioning, CAP.</p></div><div class="note-card dim"><div class="num">Note 24 &nbsp;<span class="badge b-soon">soon</span></div><h4>Messaging & async</h4><p>Queues, Kafka, event-driven design, idempotency.</p></div><div class="note-card dim"><div class="num">Note 25 &nbsp;<span class="badge b-soon">soon</span></div><h4>Case study: URL shortener</h4><p>The end-to-end walkthrough, done the way an interviewer wants it.</p></div></div>
+<div class="card" style="margin-top:34px">
+  <strong>How this site is built:</strong> each note comes from a video plus my own understanding,
+  rewritten into diagrams, tables, analogies and interview-ready answers. Nothing here is copy-paste &mdash;
+  if it is on the page, it is because I could explain it.
+</div>
+
+</div>
+<footer>SysDesign &mdash; built while learning. Notes by Affan.</footer>
+<script></script>
+</body>
+</html>
