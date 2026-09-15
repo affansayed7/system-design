@@ -322,6 +322,56 @@ on that data into a single unit (a class), and controlling access to that data
 from outside &mdash; usually by making fields <code>private</code> and exposing
 controlled <code>public</code> getters/setters.</p>
 
+<div class="callout hook">
+  <span class="lbl">Encapsulation = data security</span>
+  <p>Think of encapsulation as putting your class's data in a locked capsule.
+  Nobody outside the class can reach in and change it directly &mdash; they can
+  only go through the "doors" (methods) the class chooses to expose. This is
+  literally why the term is <em>encapsulation</em>: the data is sealed inside a
+  capsule, and the class controls every point of entry and exit. That's what
+  makes it a <strong>data security</strong> mechanism, not just a code-organization
+  habit &mdash; it stops other parts of a large codebase from corrupting an
+  object's internal state, by accident or otherwise.</p>
+</div>
+
+<h3>Access modifiers &mdash; the locks on the capsule</h3>
+<p>C++ gives you three access modifiers to control exactly who can reach a
+class member. This is the actual mechanism encapsulation is built on:</p>
+
+<table>
+  <tr><th>Modifier</th><th>Who can access it</th><th>Typical use</th></tr>
+  <tr><td><code>private</code></td>
+      <td>Only code inside the same class</td>
+      <td>Data fields, and any internal helper methods &mdash; the default choice for anything that needs protecting</td></tr>
+  <tr><td><code>protected</code></td>
+      <td>The class itself, <strong>and</strong> any class that inherits from it</td>
+      <td>Fields a subclass needs to build on, but the outside world still shouldn't touch</td></tr>
+  <tr><td><code>public</code></td>
+      <td>Anyone &mdash; any code that has an object of this class</td>
+      <td>The methods that make up the class's intended interface (getters, setters, and other public behavior)</td></tr>
+</table>
+
+<div class="callout">
+  <span class="lbl">Rule of thumb used throughout this course</span>
+  <p>Start everything as <code>private</code>. Only open up exactly what needs
+  to be public. It's much safer to loosen access later than to discover halfway
+  through a project that something was writable from anywhere.</p>
+</div>
+
+<h3>Getters and setters</h3>
+<p>Since fields are <code>private</code>, a class needs a controlled way to let
+the outside world read and update them &mdash; that's what getters and setters
+are for:</p>
+<ul>
+  <li><strong>Getter</strong> (e.g. <code>getFuel()</code>) &mdash; returns the
+  current value of a private field. Read-only access, no way to corrupt it.</li>
+  <li><strong>Setter</strong> (e.g. <code>setFuel(int)</code> / <code>refuel(int)</code>)
+  &mdash; updates a private field, but <strong>through validation logic the
+  class controls</strong>. This is the actual point of a setter over a public
+  field: a plain public field lets anyone write anything (including invalid
+  values); a setter lets the class reject bad input before it's ever stored.</li>
+</ul>
+
 <div class="fig">
 <svg viewBox="0 0 780 190" xmlns="http://www.w3.org/2000/svg" font-family="ui-monospace,monospace" font-size="12.5">
   <rect x="260" y="20" width="260" height="150" rx="130" fill="#f1ebff" stroke="#7c3aed" stroke-width="2"/>
@@ -346,21 +396,32 @@ controlled <code>public</code> getters/setters.</p>
 <div class="cap">Fig 2.2 &mdash; data hiding: the outside world never sets fuelLevel directly</div>
 </div>
 
-<h3>Encapsulation in code</h3>
+<h3>Encapsulation in code &mdash; access modifiers + getters/setters together</h3>
 <pre><code><span class="k">class</span> <span class="t">Car</span> {
-<span class="k">private</span>:
-    <span class="t">int</span> fuelLevel;   <span class="c">// hidden -- can't be set to a garbage value from outside</span>
+<span class="k">private</span>:                       <span class="c">// LOCKED -- only Car's own code can touch these</span>
+    <span class="t">int</span> fuelLevel;
     <span class="t">int</span> speed;
 
-<span class="k">public</span>:
+<span class="k">protected</span>:                     <span class="c">// visible to Car AND any class that inherits from it</span>
+    <span class="t">std</span>::string engineType;
+
+<span class="k">public</span>:                        <span class="c">// OPEN -- this is the class's real interface</span>
     <span class="t">Car</span>() : fuelLevel(<span class="n">0</span>), speed(<span class="n">0</span>) {}
 
-    <span class="c">// controlled read access</span>
+    <span class="c">// ---- getter: read-only access ----</span>
     <span class="t">int</span> <span class="f">getFuel</span>() <span class="k">const</span> {
         <span class="k">return</span> fuelLevel;
     }
 
-    <span class="c">// controlled write access -- validation lives HERE, in one place</span>
+    <span class="c">// ---- setter: write access, but validated ----</span>
+    <span class="t">void</span> <span class="f">setFuel</span>(<span class="t">int</span> amount) {
+        <span class="k">if</span> (amount &gt;= <span class="n">0</span> &amp;&amp; amount &lt;= <span class="n">100</span>)  <span class="c">// setter rejects bad input</span>
+            fuelLevel = amount;
+        <span class="k">else</span>
+            <span class="k">std</span>::cout &lt;&lt; <span class="s">"Invalid fuel amount!\n"</span>;
+    }
+
+    <span class="c">// a setter can also just add, instead of replacing -- same idea</span>
     <span class="t">void</span> <span class="f">refuel</span>(<span class="t">int</span> amount) {
         <span class="k">if</span> (amount &gt; <span class="n">0</span>)
             fuelLevel += amount;
@@ -369,18 +430,26 @@ controlled <code>public</code> getters/setters.</p>
 
 <span class="t">int</span> <span class="f">main</span>() {
     <span class="t">Car</span> myCar;
+    myCar.<span class="f">setFuel</span>(<span class="n">50</span>);          <span class="c">// goes through validation</span>
     myCar.<span class="f">refuel</span>(<span class="n">20</span>);
-    <span class="c">// myCar.fuelLevel = -50;   would not compile -- fuelLevel is private</span>
-    <span class="k">std</span>::cout &lt;&lt; myCar.<span class="f">getFuel</span>();
+
+    <span class="c">// myCar.fuelLevel = -999;   would NOT compile -- private</span>
+    <span class="c">// myCar.engineType = "V8";  would NOT compile outside Car/subclass -- protected</span>
+
+    <span class="k">std</span>::cout &lt;&lt; myCar.<span class="f">getFuel</span>();  <span class="c">// only door back out</span>
 }
 </code></pre>
 
 <div class="callout trap">
   <span class="lbl">Why this matters, not just syntax</span>
   <p>Without encapsulation, any part of a large codebase could set
-  <code>fuelLevel = -999</code> directly. With it, <code>refuel()</code> is the
-  <em>only</em> door in, so every validation rule lives in exactly one place.
-  That is the maintainability pillar from Lecture 01, in practice.</p>
+  <code>fuelLevel = -999</code> directly, and nothing would stop it. With
+  <code>private</code> + a setter, <code>setFuel()</code>/<code>refuel()</code>
+  are the <em>only</em> doors in, so every validation rule (no negative fuel,
+  no overfilling past 100) lives in exactly one place instead of being
+  duplicated &mdash; or forgotten &mdash; everywhere the field is touched. That
+  is the maintainability pillar from Lecture 01, and the "data security"
+  framing above, both showing up as the same real behavior.</p>
 </div>
 
 <hr>
@@ -394,18 +463,10 @@ controlled <code>public</code> getters/setters.</p>
   <tr><td><strong>One-liner</strong></td><td>"You don't see the engine."</td><td>"You can't reach in and rewire the engine even if you wanted to."</td></tr>
 </table>
 
-<div class="callout">
-  <span class="lbl">Note on this page</span>
-  <p>The abstraction section above follows the video's Car walkthrough directly.
-  The encapsulation section is standard OOP practice (private fields + controlled
-  accessors) written up the same way, since that part of the video comes next in
-  your watch order &mdash; send your notes after you watch it and this section
-  gets corrected to match exactly what was shown.</p>
-</div>
 
 
 <div class="quiz">
-  <h3>Quiz &mdash; 9 questions</h3>
+  <h3>Quiz &mdash; 11 questions</h3>
   <div class="score" id="score"></div>
   <div id="quiz-body"></div>
 </div>
@@ -414,7 +475,7 @@ controlled <code>public</code> getters/setters.</p>
 </div>
 <footer>SysDesign &mdash; built while learning. Notes by Affan.</footer>
 <script>
-const QUIZ = [{"q": "Per the definition given, OOP organizes software design around what?", "o": ["Functions that operate on shared data", "Data (objects), bundled with the functions that act on it", "Global variables and utility scripts", "Database tables"], "a": 1, "e": "OOP bundles data and behavior together into objects, in contrast to procedural programming, which organizes code around functions operating on separate data."}, {"q": "In the Car example, which of these would most likely be a PRIVATE method?", "o": ["start()", "accelerate()", "engineIgnite()", "brake()"], "a": 2, "e": "engineIgnite() is internal implementation detail the driver never calls directly -- it's private, invoked only from within start()."}, {"q": "What does abstraction primarily hide?", "o": ["Unnecessary implementation complexity", "Unauthorized access to data", "Network latency", "Compiler warnings"], "a": 0, "e": "Abstraction is about hiding complexity -- showing only what an object does (start, accelerate, brake) and hiding how it does it (engine ignition, gear shifting)."}, {"q": "What does encapsulation primarily protect against?", "o": ["Slow method calls", "Uncontrolled/invalid direct access to an object's data", "Missing header files", "Too many public methods"], "a": 1, "e": "Encapsulation bundles data with methods and restricts direct access (e.g., making fuelLevel private), so data can only change through validated, controlled entry points."}, {"q": "Why is fuelLevel made private in the encapsulation example?", "o": ["To make the class compile faster", "So validation logic (like amount > 0) lives in one place, not scattered everywhere", "Because private variables use less memory", "It's required by every C++ class"], "a": 1, "e": "Making the field private forces all changes through refuel(), so the one validation rule can't be bypassed or duplicated elsewhere in the codebase."}, {"q": "Which pair correctly matches the level each pillar operates at?", "o": ["Abstraction = implementation level, Encapsulation = design level", "Abstraction = design level, Encapsulation = implementation level", "Both operate purely at the design level", "Both operate purely at the implementation level"], "a": 1, "e": "Abstraction is a design-level decision (what to expose); encapsulation is how you implement that protection (access specifiers, getters/setters)."}, {"q": "A driver not needing to know how the gearbox shifts ratios is an example of:", "o": ["Encapsulation", "Abstraction", "Inheritance", "Polymorphism"], "a": 1, "e": "This is the classic abstraction analogy -- the complexity of gear shifting is hidden behind the simple accelerate()/brake() interface."}, {"q": "In C++, encapsulation is most directly implemented using:", "o": ["Templates", "Access specifiers (private/protected) plus getters/setters", "The auto keyword", "Multiple inheritance"], "a": 1, "e": "private/protected fields combined with controlled public accessor methods are the standard C++ mechanism for encapsulation."}, {"q": "Which statement best distinguishes the two pillars?", "o": ["\"You don't see the engine\" is encapsulation; \"you can't rewire it\" is abstraction", "\"You don't see the engine\" is abstraction; \"you can't rewire it\" is encapsulation", "They are two names for the exact same mechanism", "Neither applies to C++"], "a": 1, "e": "Abstraction hides what you don't need to see; encapsulation prevents you from reaching in and changing internal state directly, even if you wanted to."}];
+const QUIZ = [{"q": "Per the definition given, OOP organizes software design around what?", "o": ["Functions that operate on shared data", "Data (objects), bundled with the functions that act on it", "Global variables and utility scripts", "Database tables"], "a": 1, "e": "OOP bundles data and behavior together into objects, in contrast to procedural programming, which organizes code around functions operating on separate data."}, {"q": "In the Car example, which of these would most likely be a PRIVATE method?", "o": ["start()", "accelerate()", "engineIgnite()", "brake()"], "a": 2, "e": "engineIgnite() is internal implementation detail the driver never calls directly -- it's private, invoked only from within start()."}, {"q": "What does abstraction primarily hide?", "o": ["Unnecessary implementation complexity", "Unauthorized access to data", "Network latency", "Compiler warnings"], "a": 0, "e": "Abstraction is about hiding complexity -- showing only what an object does (start, accelerate, brake) and hiding how it does it (engine ignition, gear shifting)."}, {"q": "What does encapsulation primarily protect against?", "o": ["Slow method calls", "Uncontrolled/invalid direct access to an object's data", "Missing header files", "Too many public methods"], "a": 1, "e": "Encapsulation bundles data with methods and restricts direct access (e.g., making fuelLevel private), so data can only change through validated, controlled entry points."}, {"q": "Why is fuelLevel made private in the encapsulation example?", "o": ["To make the class compile faster", "So validation logic (like amount > 0) lives in one place, not scattered everywhere", "Because private variables use less memory", "It's required by every C++ class"], "a": 1, "e": "Making the field private forces all changes through refuel(), so the one validation rule can't be bypassed or duplicated elsewhere in the codebase."}, {"q": "Which access modifier allows a member to be used by the class itself AND by any class that inherits from it, but nowhere else?", "o": ["private", "protected", "public", "static"], "a": 1, "e": "protected sits between private and public: visible to the class and its subclasses, but still hidden from unrelated outside code."}, {"q": "What is the real difference between a plain public field and a setter method for the same data?", "o": ["There is no difference, they behave identically", "A setter can validate/reject bad input before storing it; a public field cannot", "A setter is always faster at runtime", "A setter removes the need for a constructor"], "a": 1, "e": "That's the whole point of a setter: it's a controlled gateway that can enforce rules (like rejecting a negative or out-of-range value), which a directly writable public field can never do."}, {"q": "Which pair correctly matches the level each pillar operates at?", "o": ["Abstraction = implementation level, Encapsulation = design level", "Abstraction = design level, Encapsulation = implementation level", "Both operate purely at the design level", "Both operate purely at the implementation level"], "a": 1, "e": "Abstraction is a design-level decision (what to expose); encapsulation is how you implement that protection (access specifiers, getters/setters)."}, {"q": "A driver not needing to know how the gearbox shifts ratios is an example of:", "o": ["Encapsulation", "Abstraction", "Inheritance", "Polymorphism"], "a": 1, "e": "This is the classic abstraction analogy -- the complexity of gear shifting is hidden behind the simple accelerate()/brake() interface."}, {"q": "In C++, encapsulation is most directly implemented using:", "o": ["Templates", "Access specifiers (private/protected) plus getters/setters", "The auto keyword", "Multiple inheritance"], "a": 1, "e": "private/protected fields combined with controlled public accessor methods are the standard C++ mechanism for encapsulation."}, {"q": "Which statement best distinguishes the two pillars?", "o": ["\"You don't see the engine\" is encapsulation; \"you can't rewire it\" is abstraction", "\"You don't see the engine\" is abstraction; \"you can't rewire it\" is encapsulation", "They are two names for the exact same mechanism", "Neither applies to C++"], "a": 1, "e": "Abstraction hides what you don't need to see; encapsulation prevents you from reaching in and changing internal state directly, even if you wanted to."}];
 (function(){
   const root=document.getElementById('quiz-body'); if(!root||!QUIZ.length) return;
   let answered=0, correct=0;
